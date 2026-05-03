@@ -38,6 +38,22 @@ mkdir -p "$OUT" "$DIST" "$LOG"
 
 cd "$KERNEL_DIR"
 
+# ---- Create techpack/stub/ (ZTE GPL drop omits it; Makefile expects it) ----
+TECHPACK_STUB="$KERNEL_DIR/techpack/stub"
+if [ ! -f "$TECHPACK_STUB/Makefile" ]; then
+    echo "[*] Creating empty techpack/stub/ to satisfy Makefile (ZTE GPL drop omits this) ..."
+    mkdir -p "$TECHPACK_STUB"
+    cat > "$TECHPACK_STUB/Makefile" <<'EOF'
+# Empty stub Makefile — required by techpack/Kbuild
+EOF
+    cat > "$TECHPACK_STUB/Kbuild" <<'EOF'
+# SPDX-License-Identifier: GPL-2.0-only
+# Empty stub Kbuild — camera-kernel.zip and display-drivers.zip from the
+# ZTE GPL drop are NOT extracted here, since GKI builds reuse the stock
+# vendor_boot.img modules. This empty stub keeps the parent Makefile happy.
+EOF
+fi
+
 # ---- Merge defconfig (replicates merge_nubia_diffconfig) ----
 # build.config.nubia.nx709s for VARIANT=gki applies:
 #   base = vendor/waipio-NX709S-gki_defconfig
