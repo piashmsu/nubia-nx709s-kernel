@@ -27,8 +27,24 @@ jobs:
 
       - name: Free disk space (CI runner)
         run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+                      /opt/hostedtoolcache/CodeQL /opt/hostedtoolcache/Ruby \
+                      /opt/hostedtoolcache/PyPy /opt/hostedtoolcache/Python \
+                      /usr/local/share/boost /usr/local/share/powershell \
+                      /usr/lib/jvm /usr/local/lib/heroku /usr/local/julia* \
+                      /var/lib/gems /var/cache/apt/archives
+          sudo apt-get autoremove -y 2>/dev/null || true
+          sudo apt-get clean
           df -h
+          free -h
+
+      - name: Setup swap (8 GB to survive kernel link)
+        run: |
+          sudo fallocate -l 8G /mnt/swap || sudo dd if=/dev/zero of=/mnt/swap bs=1M count=8192
+          sudo chmod 600 /mnt/swap
+          sudo mkswap /mnt/swap
+          sudo swapon /mnt/swap
+          free -h
 
       - name: Install build dependencies
         run: bash scripts/01-install-deps.sh

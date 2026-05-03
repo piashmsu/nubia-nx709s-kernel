@@ -27,8 +27,11 @@ clang --version | head -1
 # ccache
 export USE_CCACHE=1
 export CCACHE_DIR="${CCACHE_DIR:-$HOME/.ccache}"
-export CCACHE_MAXSIZE="${CCACHE_MAXSIZE:-20G}"
+export CCACHE_MAXSIZE="${CCACHE_MAXSIZE:-5G}"
+export CCACHE_COMPRESS=1
+export CCACHE_COMPRESSLEVEL=4
 mkdir -p "$CCACHE_DIR"
+ccache --max-size="$CCACHE_MAXSIZE" 2>/dev/null || true
 
 # ---- Output dirs ----
 OUT="$ROOT/out"
@@ -83,12 +86,22 @@ if [ ! -f "$MERGE_OUT/.config" ]; then
 fi
 echo "[*] Merged .config size: $(wc -l < "$MERGE_OUT/.config") lines"
 
+# ---- Job count: cap at 2 on small CI runners (OOM-prone during link) ----
+TOTAL_MEM_GB=$(awk '/MemTotal/{printf "%d", $2/1024/1024}' /proc/meminfo 2>/dev/null || echo 8)
+if [ "${KBUILD_JOBS:-}" != "" ]; then
+    JOBS="$KBUILD_JOBS"
+elif [ "$TOTAL_MEM_GB" -lt 12 ]; then
+    JOBS=2
+    echo "[*] Memory ${TOTAL_MEM_GB} GB < 12 GB -> capping JOBS=2 to avoid OOM"
+fi
+echo "[*] Build jobs: $JOBS  (mem: ${TOTAL_MEM_GB} GB, cpus: $(nproc))"
+
 # ---- Common make args ----
 MAKE_ARGS=(
     ARCH=arm64
     LLVM=1
     LLVM_IAS=1
-    CC=clang
+    CC="ccache clang"
     LD=ld.lld
     AR=llvm-ar
     NM=llvm-nm
@@ -96,8 +109,8 @@ MAKE_ARGS=(
     OBJDUMP=llvm-objdump
     STRIP=llvm-strip
     READELF=llvm-readelf
-    HOSTCC=clang
-    HOSTCXX=clang++
+    HOSTCC="ccache clang"
+    HOSTCXX="ccache clang++"
     HOSTLD=ld.lld
     CROSS_COMPILE=aarch64-linux-gnu-
     O="$MERGE_OUT"
