@@ -1,0 +1,86 @@
+From: piashmsu <piashmsu@users.noreply.github.com>
+Subject: [PATCH] fix: stub ZTE-only vmlinux symbols missing from GKI build
+
+ZTE patched fork.c and binder.c to call f_monitor_send_uevent() and
+isTargetPid() unconditionally. The providers live under drivers/nubia/
+and default to =m, but vmlinux cannot reference modules -- ld.lld
+fails with "undefined symbol" at link time:
+
+  ld.lld: error: undefined symbol: f_monitor_send_uevent
+  >>> referenced by fork.c:2564 (kernel/fork.c:2564)
+  ld.lld: error: undefined symbol: isTargetPid
+  >>> referenced by binder.c:673 (drivers/android/binder.c:673)
+
+The running stock kernel does not contain these calls at all (no
+NUBIA_* configs in /proc/config.gz). The published GPL source is a
+debug branch.  Make the calls conditional so the build matches the
+stock kernel.
+
+Signed-off-by: piashmsu
+
+---
+ drivers/android/binder.c | 4 +++-
+ kernel/fork.c            | 4 +++-
+ 2 files changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/android/binder.c b/drivers/android/binder.c
+--- a/drivers/android/binder.c
++++ b/drivers/android/binder.c
+@@ -96,7 +96,7 @@
+ #define BINDER_DEBUG_ENTRY(name) \
+ static int binder_##name##_open(struct inode *inode, struct file *file) \
+ { \
+ 	return single_open(file, binder_##name##_show, inode->i_private); \
+ } \
+ \
+ static const struct file_operations binder_##name##_fops = { \
+ 	.owner = THIS_MODULE, \
+ 	.open = binder_##name##_open, \
+ 	.read = seq_read, \
+ 	.llseek = seq_lseek, \
+ 	.release = single_release, \
+ }
+-extern int isTargetPid(int pid);
++#if IS_BUILTIN(CONFIG_NUBIA_SCHED_CTL)
++extern int isTargetPid(int pid);
++#endif
+
+ static int binder_proc_show(struct seq_file *m, void *unused);
+
+@@ -670,9 +670,11 @@
+ 	has_cap_nice = has_capability_noaudit(task, CAP_SYS_NICE);
+
+ 	priority = to_userspace_prio(policy, desired.prio);
+
++#if IS_BUILTIN(CONFIG_NUBIA_SCHED_CTL)
+     if(isTargetPid(current->tgid)) {
+ 		has_cap_nice = true;
+     }
++#endif
+
+ 	if (verify && is_rt_policy(policy) && !has_cap_nice) {
+
+diff --git a/kernel/fork.c b/kernel/fork.c
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -133,7 +133,9 @@
+ static int max_threads;		/* tunable limit on nr_threads */
+
+ #define NAMED_ARRAY_INDEX(x)	[x] = __stringify(x)
+
+-extern void f_monitor_send_uevent(int pid, int tid);
++#if IS_BUILTIN(CONFIG_NUBIA_FORK_MONITOR_CTL)
++extern void f_monitor_send_uevent(int pid, int tid);
++#endif
+
+ static const char * const resident_page_types[] = {
+
+@@ -2561,7 +2563,9 @@
+
+ 	put_pid(pid);
+-        f_monitor_send_uevent(p->tgid, p->pid);
++#if IS_BUILTIN(CONFIG_NUBIA_FORK_MONITOR_CTL)
++	f_monitor_send_uevent(p->tgid, p->pid);
++#endif
+ 	return nr;
+ }

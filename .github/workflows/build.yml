@@ -65,6 +65,9 @@ jobs:
         if: ${{ inputs.nethunter }}
         run: bash scripts/05-apply-nethunter.sh
 
+      - name: Patch ZTE quirks (vmlinux symbol fix)
+        run: bash scripts/04b-fix-zte-quirks.sh
+
       - name: Build kernel
         run: bash scripts/06-build-kernel.sh
 
