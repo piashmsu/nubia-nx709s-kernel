@@ -1,0 +1,1 @@
+Linux kali 5.10.168-android12-9-00001-g61344663df42-ab9937098 #1 SMP PREEMPT Wed Apr 12 07:05:56 UTC 2023 aarch64 GNU/Linux

@@ -1,0 +1,30 @@
+# Build artifacts
+out/
+build/
+toolchains/clang-aosp/
+toolchains/mkbootimg/
+toolchains/avb/
+nethunter/
+
+# Cloned kernel source (1.5 GB, regenerate with `git clone https://github.com/ztemt/NX709S kernel_source/NX709S`)
+kernel_source/NX709S/
+
+# Boot images (DEVICE-SPECIFIC, do not commit)
+boot_image/*.img
+boot_image/unpack/
+boot_image/vendor_unpack/
+boot-new.img
+dtbo-new.img
+
+# ccache
+.ccache/
+
+# Logs / temp
+*.log
+*.tmp
+*.swp
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
