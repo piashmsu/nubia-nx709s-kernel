@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# 02-fetch-toolchain.sh — fetch AOSP clang + mkbootimg + avbtool
+# 02-fetch-toolchain.sh — fetch AOSP clang prebuilt + mkbootimg + avbtool
+# Note: legacy `build.sh` was removed from kernel/build (Google migrated to kleaf/Bazel).
+# We use a manual `make` based build instead — see 06-build-kernel.sh.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -15,8 +17,8 @@ else
     echo "  already present, skipping."
 fi
 
-echo "[*] Available clang versions:"
-ls -1 "$TOOLCHAINS/clang-aosp" | grep '^clang-' | head
+echo "[*] Available clang versions (top 5):"
+ls -1 "$TOOLCHAINS/clang-aosp" | grep '^clang-r' | sort -V | tail -5
 
 echo "[*] Fetching mkbootimg ..."
 if [ ! -d "$TOOLCHAINS/mkbootimg" ]; then
@@ -32,17 +34,5 @@ if [ ! -d "$TOOLCHAINS/avb" ]; then
         "$TOOLCHAINS/avb"
 fi
 
-echo "[*] Fetching kernel build wrapper (build/) ..."
-if [ ! -d "$ROOT/kernel_source/NX709S/build" ]; then
-    git clone --depth=1 \
-        https://android.googlesource.com/kernel/build \
-        "$ROOT/kernel_source/NX709S/build"
-fi
-
-echo "[*] Fetching common kernel (only if you want to update 5.10.101 -> 5.10.168) ..."
-echo "    skipped by default; uncomment to enable."
-# git clone --depth=1 -b android12-5.10 \
-#     https://android.googlesource.com/kernel/common \
-#     "$ROOT/kernel_source/NX709S/common"
-
-echo "[*] Done."
+echo "[*] Done. (We do NOT clone kernel/build — modern repo no longer ships build.sh.)"
+echo "    The build script 06-build-kernel.sh uses direct 'make' instead."
