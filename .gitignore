@@ -9,10 +9,11 @@ nethunter/
 # Cloned kernel source (1.5 GB, regenerate with `git clone https://github.com/ztemt/NX709S kernel_source/NX709S`)
 kernel_source/NX709S/
 
-# Boot images (DEVICE-SPECIFIC, do not commit)
-boot_image/*.img
+# Boot images (DEVICE-SPECIFIC, do not commit — they are signed binaries)
+boot_image/**/*.img
 boot_image/unpack/
 boot_image/vendor_unpack/
+boot_image/backup_*/
 boot-new.img
 dtbo-new.img
 
