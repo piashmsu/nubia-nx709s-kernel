@@ -20,13 +20,36 @@ This document explains how to roll back to the stock kernel if a custom build br
 | recovery_b.img | 100 MB | B-slot recovery |
 | **Total** | **~634 MB** | per snapshot |
 
-## Backup locations (3 redundant copies)
+## Backup locations (4 redundant copies)
 
 1. `/sdcard/nubia_boot_backup_<timestamp>/` — primary, fastest recovery from TWRP
 2. `/external_sd/nubia_backup_<timestamp>/` — external microSD redundancy
 3. `<repo>/boot_image/backup_<date>/` — chroot/repo workspace (not committed to git)
+4. **GitHub Release (cloud, downloadable from any device with internet)**:
+   <https://github.com/piashmsu/nubia-nx709s-kernel/releases/tag/stock-boot-backup-2026-05-04>
+   — 15 zstd-compressed assets (~85 MB total). Survives complete device wipe.
 
 Verify with `sha256sum -c SHA256SUMS` inside any backup dir.
+
+### One-shot cloud recovery
+
+If everything else is lost (factory reset / SD card gone / phone bricked but you got a fresh device or PC):
+
+```bash
+# any Linux box with internet
+curl -fsSL https://raw.githubusercontent.com/piashmsu/nubia-nx709s-kernel/main/scripts/98-download-backup-from-release.sh | bash
+# downloads to ./restored/, verifies SHA256, decompresses
+```
+
+Or manually:
+
+```bash
+REL=https://github.com/piashmsu/nubia-nx709s-kernel/releases/download/stock-boot-backup-2026-05-04
+for f in boot_{a,b} dtbo_{a,b} vendor_boot_{a,b} vbmeta_{a,b} vbmeta_system_{a,b} recovery_{a,b} new-boot; do
+  curl -L -O "$REL/${f}.img.zst"
+done
+zstd -d *.img.zst
+```
 
 ## Symbol fingerprint of the running stock kernel
 
